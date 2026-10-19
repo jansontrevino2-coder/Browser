@@ -2,275 +2,440 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Janson Browser</title>
 
 <style>
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,sans-serif;
 }
 
 body{
-    font-family:Arial,sans-serif;
-    background:#121212;
-    color:white;
-    height:100vh;
-    display:flex;
-    flex-direction:column;
+background:#111827;
+color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
 }
 
 #tabs{
-    display:flex;
-    background:#1e1e1e;
-    padding:5px;
-    overflow-x:auto;
+display:flex;
+align-items:center;
+gap:5px;
+padding:8px;
+background:#1f2937;
+overflow-x:auto;
 }
 
 .tab{
-    background:#2a2a2a;
-    padding:10px 15px;
-    margin-right:5px;
-    border-radius:8px;
-    cursor:pointer;
+background:#374151;
+padding:8px 15px;
+border-radius:10px;
+cursor:pointer;
+white-space:nowrap;
 }
 
-.tab.active{
-    background:#4285f4;
+.active{
+background:#3b82f6;
 }
 
 #newTab{
-    background:#34a853;
-    border:none;
-    color:white;
-    padding:10px 15px;
-    border-radius:8px;
-    cursor:pointer;
+background:#22c55e;
+padding:8px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+color:white;
 }
 
 .toolbar{
-    display:flex;
-    gap:10px;
-    padding:10px;
-    background:#202124;
+display:flex;
+gap:10px;
+padding:10px;
+background:#0f172a;
 }
 
-input{
-    flex:1;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
+.toolbar input{
+flex:1;
+padding:12px;
+border:none;
+border-radius:10px;
 }
 
-button{
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#4285f4;
-    color:white;
-    cursor:pointer;
+.toolbar button{
+padding:12px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#3b82f6;
+color:white;
 }
 
 #content{
-    flex:1;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    padding:20px;
+flex:1;
+overflow:auto;
+padding:25px;
 }
 
-.homepage h1{
-    font-size:60px;
-    color:#4285f4;
+.home{
+text-align:center;
+margin-top:50px;
 }
 
-.homepage p{
-    margin-top:15px;
-    font-size:20px;
-    color:#ccc;
+.home h1{
+font-size:52px;
+margin-bottom:10px;
+}
+
+.home p{
+color:#aaa;
+}
+
+.section{
+margin-top:30px;
+}
+
+.section h2{
+margin-bottom:10px;
+}
+
+.card{
+background:#1f2937;
+padding:12px;
+border-radius:10px;
+margin-bottom:8px;
+cursor:pointer;
+}
+
+.card:hover{
+background:#374151;
 }
 </style>
 </head>
 <body>
 
 <div id="tabs">
-    <div class="tab active" onclick="switchTab(0)">
-        Home
-    </div>
-
-    <button id="newTab" onclick="createTab()">
-        +
-    </button>
+<button id="newTab">+</button>
 </div>
 
 <div class="toolbar">
-    <button onclick="goHome()">🏠</button>
+<button onclick="showHome()">🏠</button>
 
-    <input
-        id="search"
-        placeholder="Search or enter URL..."
-    >
+<input id="searchBox"
+placeholder="Search the web or enter URL">
 
-    <button onclick="searchWeb()">
-        Search
-    </button>
+<button onclick="search()">Search</button>
 </div>
 
-<div id="content">
-
-    <div class="homepage">
-        <h1>🌐 Janson Browser</h1>
-        <p>Your custom browser homepage</p>
-    </div>
-
-</div>
+<div id="content"></div>
 
 <script>
 
 let tabs = [
-    {title:"Home",type:"home"}
+{
+title:"Home",
+type:"home"
+}
 ];
 
 let activeTab = 0;
 
+const content =
+document.getElementById("content");
+
+function saveBookmarks(list){
+localStorage.setItem(
+"bookmarks",
+JSON.stringify(list)
+);
+}
+
+function getBookmarks(){
+return JSON.parse(
+localStorage.getItem("bookmarks") || "[]"
+);
+}
+
+function saveHistory(item){
+
+let history =
+JSON.parse(
+localStorage.getItem("history") || "[]"
+);
+
+history.unshift(item);
+
+history = history.slice(0,50);
+
+localStorage.setItem(
+"history",
+JSON.stringify(history)
+);
+}
+
+function getHistory(){
+
+return JSON.parse(
+localStorage.getItem("history") || "[]"
+);
+
+}
+
 function renderTabs(){
 
-    const container =
-    document.getElementById("tabs");
+const area =
+document.getElementById("tabs");
 
-    container.innerHTML = "";
+area.innerHTML = "";
 
-    tabs.forEach((tab,index)=>{
+tabs.forEach((tab,index)=>{
 
-        const el =
-        document.createElement("div");
+const el =
+document.createElement("div");
 
-        el.className =
-        "tab" +
-        (index===activeTab ? " active" : "");
+el.className =
+"tab " +
+(index===activeTab
+? "active"
+: "");
 
-        el.textContent = tab.title;
+el.textContent =
+tab.title;
 
-        el.onclick = ()=>{
-            switchTab(index);
-        };
+el.onclick=()=>{
+activeTab=index;
+renderTabs();
+renderCurrent();
+};
 
-        container.appendChild(el);
+area.appendChild(el);
 
-    });
+});
 
-    const btn =
-    document.createElement("button");
+const add =
+document.createElement("button");
 
-    btn.id = "newTab";
-    btn.textContent = "+";
+add.id="newTab";
+add.textContent="+";
 
-    btn.onclick = createTab;
+add.onclick=()=>{
 
-    container.appendChild(btn);
+tabs.push({
+title:"New Tab",
+type:"home"
+});
+
+activeTab =
+tabs.length-1;
+
+renderTabs();
+renderCurrent();
+
+};
+
+area.appendChild(add);
+
 }
 
-function switchTab(index){
+function showHome(){
 
-    activeTab = index;
+tabs[activeTab]={
+title:"Home",
+type:"home"
+};
 
-    const content =
-    document.getElementById("content");
+renderTabs();
+renderCurrent();
 
-    if(tabs[index].type==="home"){
-
-        content.innerHTML = `
-        <div class="homepage">
-            <h1>🌐 Janson Browser</h1>
-            <p>Your custom browser homepage</p>
-        </div>
-        `;
-
-    }else{
-
-        content.innerHTML = `
-        <div>
-            <h2>${tabs[index].title}</h2>
-            <p>Opened in a new browser tab.</p>
-        </div>
-        `;
-    }
-
-    renderTabs();
 }
 
-function createTab(){
+function renderCurrent(){
 
-    tabs.push({
-        title:"New Tab",
-        type:"home"
-    });
+const tab =
+tabs[activeTab];
 
-    activeTab = tabs.length - 1;
+if(tab.type==="home"){
 
-    renderTabs();
-    switchTab(activeTab);
+let bookmarks =
+getBookmarks();
+
+let history =
+getHistory();
+
+content.innerHTML=
+`
+<div class="home">
+
+<h1>🌐 Janson Browser</h1>
+
+<p>Custom Browser Homepage</p>
+
+<div class="section">
+<h2>⭐ Bookmarks</h2>
+
+<div id="bookmarks"></div>
+
+<button onclick="addBookmark()">
+Add Current Search
+</button>
+
+</div>
+
+<div class="section">
+<h2>🕒 History</h2>
+
+<div id="history"></div>
+</div>
+
+</div>
+`;
+
+const bookmarkArea =
+document.getElementById(
+"bookmarks"
+);
+
+bookmarks.forEach(item=>{
+
+bookmarkArea.innerHTML +=
+`
+<div class="card"
+onclick="window.open('${item.url}')">
+
+${item.name}
+
+</div>
+`;
+
+});
+
+const historyArea =
+document.getElementById(
+"history"
+);
+
+history.forEach(item=>{
+
+historyArea.innerHTML +=
+`
+<div class="card">
+
+${item}
+
+</div>
+`;
+
+});
+
+}
+else{
+
+content.innerHTML=
+`
+<div class="home">
+
+<h1>${tab.title}</h1>
+
+<p>Opened in browser tab</p>
+
+</div>
+`;
+
 }
 
-function goHome(){
-
-    tabs[activeTab] = {
-        title:"Home",
-        type:"home"
-    };
-
-    switchTab(activeTab);
 }
 
-function searchWeb(){
+function search(){
 
-    const query =
-    document.getElementById("search")
-    .value.trim();
+const query =
+document.getElementById(
+"searchBox"
+).value.trim();
 
-    if(!query) return;
+if(!query) return;
 
-    let url;
+let url;
 
-    if(
-       query.startsWith("http://") ||
-       query.startsWith("https://") ||
-       query.includes(".")
-    ){
+if(
+query.startsWith("http://") ||
+query.startsWith("https://") ||
+query.includes(".")
+){
 
-        url = query.startsWith("http")
-        ? query
-        : "https://" + query;
+url =
+query.startsWith("http")
+? query
+: "https://" + query;
 
-    }else{
+}else{
 
-        url =
-        "https://www.bing.com/search?q=" +
-        encodeURIComponent(query);
-    }
+url =
+"https://www.bing.com/search?q="
++
+encodeURIComponent(query);
 
-    tabs[activeTab] = {
-        title:query,
-        type:"site"
-    };
+}
 
-    renderTabs();
+saveHistory(query);
 
-    window.open(url,"_blank");
+tabs[activeTab]={
+title:
+query.length > 20
+? query.substring(0,20)+"..."
+: query,
+type:"search"
+};
+
+renderTabs();
+
+window.location.href = url;
+
+}
+
+function addBookmark(){
+
+const query =
+document.getElementById(
+"searchBox"
+).value.trim();
+
+if(!query) return;
+
+let bookmarks =
+getBookmarks();
+
+bookmarks.push({
+name:query,
+url:
+"https://www.bing.com/search?q="
++
+encodeURIComponent(query)
+});
+
+saveBookmarks(bookmarks);
+
+renderCurrent();
+
 }
 
 document
-.getElementById("search")
-.addEventListener("keydown",e=>{
+.getElementById(
+"searchBox"
+)
+.addEventListener(
+"keydown",
+e=>{
+if(e.key==="Enter"){
+search();
+}
+}
+);
 
-    if(e.key==="Enter"){
-        searchWeb();
-    }
-
-});
+renderTabs();
+renderCurrent();
 
 </script>
 
