@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Janson Browser</title>
 
 <style>
@@ -10,108 +10,73 @@
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Segoe UI,sans-serif;
+font-family:Arial,sans-serif;
 }
 
 body{
-background:#111827;
-color:white;
 height:100vh;
 display:flex;
 flex-direction:column;
+background:#111;
 }
 
 #tabs{
 display:flex;
-align-items:center;
-gap:5px;
-padding:8px;
-background:#1f2937;
+background:#222;
+padding:5px;
 overflow-x:auto;
 }
 
 .tab{
-background:#374151;
-padding:8px 15px;
-border-radius:10px;
+padding:10px 15px;
+background:#333;
+color:white;
+border-radius:8px;
+margin-right:5px;
 cursor:pointer;
-white-space:nowrap;
 }
 
 .active{
-background:#3b82f6;
+background:#4285f4;
 }
 
 #newTab{
-background:#22c55e;
-padding:8px 15px;
-border:none;
-border-radius:10px;
-cursor:pointer;
+background:#28a745;
 color:white;
+border:none;
+padding:10px 15px;
+border-radius:8px;
+cursor:pointer;
 }
 
 .toolbar{
 display:flex;
-gap:10px;
 padding:10px;
-background:#0f172a;
+background:#1a1a1a;
+gap:10px;
 }
 
-.toolbar input{
+input{
 flex:1;
-padding:12px;
+padding:10px;
 border:none;
-border-radius:10px;
+border-radius:8px;
 }
 
-.toolbar button{
-padding:12px;
+button{
+padding:10px;
 border:none;
-border-radius:10px;
+border-radius:8px;
 cursor:pointer;
-background:#3b82f6;
+background:#4285f4;
 color:white;
 }
 
-#content{
+iframe{
 flex:1;
-overflow:auto;
-padding:25px;
-}
-
-.home{
-text-align:center;
-margin-top:50px;
-}
-
-.home h1{
-font-size:52px;
-margin-bottom:10px;
-}
-
-.home p{
-color:#aaa;
-}
-
-.section{
-margin-top:30px;
-}
-
-.section h2{
-margin-bottom:10px;
-}
-
-.card{
-background:#1f2937;
-padding:12px;
-border-radius:10px;
-margin-bottom:8px;
-cursor:pointer;
-}
-
-.card:hover{
-background:#374151;
+width:100%;
+border:none;
+background:white;
 }
 </style>
 </head>
@@ -122,321 +87,150 @@ background:#374151;
 </div>
 
 <div class="toolbar">
-<button onclick="showHome()">🏠</button>
-
-<input id="searchBox"
-placeholder="Search the web or enter URL">
-
-<button onclick="search()">Search</button>
+<button onclick="home()">🏠</button>
+<input id="url" placeholder="Search or enter URL">
+<button onclick="go()">Go</button>
 </div>
 
-<div id="content"></div>
+<iframe id="frame" srcdoc="
+<h1 style='font-family:sans-serif;text-align:center;margin-top:100px;'>
+🌐 Janson Browser
+</h1>
+<p style='text-align:center;'>Search above to browse.</p>
+"></iframe>
 
 <script>
-
-let tabs = [
-{
+let tabs = [{
 title:"Home",
-type:"home"
-}
-];
+url:"home"
+}];
 
-let activeTab = 0;
-
-const content =
-document.getElementById("content");
-
-function saveBookmarks(list){
-localStorage.setItem(
-"bookmarks",
-JSON.stringify(list)
-);
-}
-
-function getBookmarks(){
-return JSON.parse(
-localStorage.getItem("bookmarks") || "[]"
-);
-}
-
-function saveHistory(item){
-
-let history =
-JSON.parse(
-localStorage.getItem("history") || "[]"
-);
-
-history.unshift(item);
-
-history = history.slice(0,50);
-
-localStorage.setItem(
-"history",
-JSON.stringify(history)
-);
-}
-
-function getHistory(){
-
-return JSON.parse(
-localStorage.getItem("history") || "[]"
-);
-
-}
+let currentTab = 0;
 
 function renderTabs(){
 
-const area =
-document.getElementById("tabs");
+const area = document.getElementById('tabs');
 
-area.innerHTML = "";
+area.innerHTML='';
 
-tabs.forEach((tab,index)=>{
+tabs.forEach((tab,i)=>{
 
-const el =
-document.createElement("div");
+const t=document.createElement('div');
 
-el.className =
-"tab " +
-(index===activeTab
-? "active"
-: "");
+t.className='tab'+(i===currentTab?' active':'');
 
-el.textContent =
-tab.title;
+t.textContent=tab.title;
 
-el.onclick=()=>{
-activeTab=index;
+t.onclick=()=>{
+
+currentTab=i;
+
+if(tab.url==="home"){
+home();
+}else{
+document.getElementById('frame').src=
+tab.url;
+}
+
 renderTabs();
-renderCurrent();
 };
 
-area.appendChild(el);
+area.appendChild(t);
 
 });
 
-const add =
-document.createElement("button");
+const add=document.createElement('button');
 
-add.id="newTab";
-add.textContent="+";
+add.id='newTab';
+
+add.textContent='+';
 
 add.onclick=()=>{
 
 tabs.push({
-title:"New Tab",
-type:"home"
+title:'New Tab',
+url:'home'
 });
 
-activeTab =
-tabs.length-1;
+currentTab=tabs.length-1;
 
 renderTabs();
-renderCurrent();
 
+home();
 };
 
 area.appendChild(add);
 
 }
 
-function showHome(){
+function home(){
 
-tabs[activeTab]={
-title:"Home",
-type:"home"
+document.getElementById('frame').srcdoc=`
+<h1 style="font-family:sans-serif;text-align:center;margin-top:100px;">
+🌐 Janson Browser
+</h1>
+<p style="text-align:center;">
+Search above to browse.
+</p>
+`;
+
+tabs[currentTab]={
+title:'Home',
+url:'home'
 };
 
 renderTabs();
-renderCurrent();
 
 }
 
-function renderCurrent(){
+function go(){
 
-const tab =
-tabs[activeTab];
+let q=document.getElementById('url').value.trim();
 
-if(tab.type==="home"){
+if(!q) return;
 
-let bookmarks =
-getBookmarks();
-
-let history =
-getHistory();
-
-content.innerHTML=
-`
-<div class="home">
-
-<h1>🌐 Janson Browser</h1>
-
-<p>Custom Browser Homepage</p>
-
-<div class="section">
-<h2>⭐ Bookmarks</h2>
-
-<div id="bookmarks"></div>
-
-<button onclick="addBookmark()">
-Add Current Search
-</button>
-
-</div>
-
-<div class="section">
-<h2>🕒 History</h2>
-
-<div id="history"></div>
-</div>
-
-</div>
-`;
-
-const bookmarkArea =
-document.getElementById(
-"bookmarks"
-);
-
-bookmarks.forEach(item=>{
-
-bookmarkArea.innerHTML +=
-`
-<div class="card"
-onclick="window.open('${item.url}')">
-
-${item.name}
-
-</div>
-`;
-
-});
-
-const historyArea =
-document.getElementById(
-"history"
-);
-
-history.forEach(item=>{
-
-historyArea.innerHTML +=
-`
-<div class="card">
-
-${item}
-
-</div>
-`;
-
-});
-
-}
-else{
-
-content.innerHTML=
-`
-<div class="home">
-
-<h1>${tab.title}</h1>
-
-<p>Opened in browser tab</p>
-
-</div>
-`;
-
-}
-
-}
-
-function search(){
-
-const query =
-document.getElementById(
-"searchBox"
-).value.trim();
-
-if(!query) return;
-
-let url;
+let target;
 
 if(
-query.startsWith("http://") ||
-query.startsWith("https://") ||
-query.includes(".")
+q.startsWith('http://') ||
+q.startsWith('https://')
 ){
 
-url =
-query.startsWith("http")
-? query
-: "https://" + query;
+target=q;
+
+}else if(q.includes('.')){
+
+target='https://'+q;
 
 }else{
 
-url =
-"https://www.bing.com/search?q="
-+
-encodeURIComponent(query);
+target='https://www.bing.com/search?q='+
+encodeURIComponent(q);
 
 }
 
-saveHistory(query);
-
-tabs[activeTab]={
-title:
-query.length > 20
-? query.substring(0,20)+"..."
-: query,
-type:"search"
+tabs[currentTab]={
+title:q.substring(0,15),
+url:target
 };
 
-renderTabs();
+document.getElementById('frame').src=
+target;
 
-window.location.href = url;
+renderTabs();
 
 }
 
-function addBookmark(){
+document.getElementById('url')
+.addEventListener('keydown',e=>{
 
-const query =
-document.getElementById(
-"searchBox"
-).value.trim();
+if(e.key==='Enter'){
+go();
+}
 
-if(!query) return;
-
-let bookmarks =
-getBookmarks();
-
-bookmarks.push({
-name:query,
-url:
-"https://www.bing.com/search?q="
-+
-encodeURIComponent(query)
 });
 
-saveBookmarks(bookmarks);
-
-renderCurrent();
-
-}
-
-document
-.getElementById(
-"searchBox"
-)
-.addEventListener(
-"keydown",
-e=>{
-if(e.key==="Enter"){
-search();
-}
-}
-);
-
 renderTabs();
-renderCurrent();
-
 </script>
 
 </body>
